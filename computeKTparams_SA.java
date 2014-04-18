@@ -94,9 +94,10 @@ public class computeKTparams_SA {
 		double likelihoodcorrect = 0.0;
 		double prevLgivenresult = 0.0;
 		double newL = 0.0;
+		Integer count = 0;
 
 		for (int i = start; i <= end; i++) {
-			// System.out.println(SSR);
+
 			if (!students_[i].equals(prevstudent)) {
 				prevL = Lzero;
 				prevstudent = students_[i];
@@ -106,30 +107,56 @@ public class computeKTparams_SA {
 				likelihoodcorrect = prevL;
 			else
 				likelihoodcorrect = (prevL * (1.0 - S)) + ((1.0 - prevL) * G);
-			SSR += (right_[i] - likelihoodcorrect) * (right_[i] - likelihoodcorrect);
+			if ( right_[i] != -1.0 ) {
+				SSR += (right_[i] - likelihoodcorrect) * (right_[i] - likelihoodcorrect);
+				count++;
+			}
 
-			if (right_[i] == 1.0)
-				prevLgivenresult = ((prevL * (1.0 - S)) / ((prevL * (1 - S)) + ((1.0 - prevL) * (G))));
-			else
-				prevLgivenresult = ((prevL * (S)) / ((prevL * (S)) + ((1.0 - prevL) * (1.0 - G))));
+			if ( right_[i] == -1.0 ) {
+				prevLgivenresult = prevL;
+			} else {
+				prevLgivenresult = right_[i]*((prevL * (1.0 - S)) / ((prevL * (1 - S)) + ((1.0 - prevL) * (G))));
+				prevLgivenresult += (1-right_[i])*((prevL * (S)) / ((prevL * (S)) + ((1.0 - prevL) * (1.0 - G))));
+			}
 
 			newL = prevLgivenresult + (1.0 - prevLgivenresult) * trans;
 			prevL = newL;
 		}
-		return SSR;
+		if ( count == 0 ) return 0;
+		return Math.sqrt(SSR/count);		// Using the RMSE instead of the SSR
 	}
 
 	public void fit_skill_model(int curskill) {
-		double SSR = 0.0;
-		double BestSSR = 9999999.0;
+		double BestRMSE = 9999999.0;
 		double bestLzero = 0.01;
 		double besttrans = 0.01;
 		double bestG = 0.01;
 		double bestS = 0.01;
-		double topG = 0.99;
-		double topS = 0.99;
-		double topL0 = 0.99;
-		double topT = 0.99;
+		double topG = 0.999999;
+		double topS = 0.999999;
+		double topL0 = 0.999999;
+		double topT = 0.999999;
+		
+		double prevBestRMSE = 9999999.0;
+
+		double oldL0 = 0.01;
+		double oldG = 0.01;
+		double oldS = 0.01;
+		double oldT = 0.01;
+		
+		double newL0 = 0.01;
+		double newG = 0.01;
+		double newS = 0.01;
+		double newT = 0.01;
+		
+		double oldRMSE = 1;
+		double newRMSE = 1;
+		
+		double temp = 0.005;
+		double stepSize = 0.05;
+		
+		Integer totalSteps = 1000000;
+		
 		if (L0Tbounded) {
 			topL0 = 0.85;
 			topT = 0.3;
@@ -143,52 +170,61 @@ public class computeKTparams_SA {
 		if (curskill > 0)
 			startact = skillends_[curskill - 1] + 1;
 		int endact = skillends_[curskill];
-
-		// System.out.print(students_[startact]);
-		// System.out.print(" ");
-		// System.out.println(students_[endact]);
-
-		for (double Lzero = 0.01; Lzero <= topL0; Lzero = Lzero + 0.01)
-			for (double trans = 0.01; trans <= topT; trans = trans + 0.01) {
-				for (double G = 0.01; G <= topG; G = G + 0.01) {
-					for (double S = 0.01; S <= topS; S = S + 0.01) {
-						SSR = findGOOF(startact, endact, Lzero, trans, G, S);
-						/**
-						 * System.out.print(Lzero); System.out.print("\t");
-						 * System.out.println(trans);
-						 */
-						if (SSR < BestSSR) {
-							BestSSR = SSR;
-							bestLzero = Lzero;
-							besttrans = trans;
-							bestG = G;
-							bestS = S;
-						}
-					}
-				}
+		
+		// Select random initial conditions.
+		oldL0 = Math.random()*topL0;
+		oldG = Math.random()*topG;
+		oldS = Math.random()*topS;
+		oldT = Math.random()*topT;
+		oldRMSE = findGOOF(startact, endact, oldL0, oldT, oldG, oldS);
+	
+		for ( Integer i = 0; i < totalSteps; i++ ) {
+			Double randomchange = Math.random();
+			Double thisStep = 2.*(Math.random()-0.5)*stepSize;
+				
+			newL0 = oldL0;
+			newT = oldT;
+			newG = oldG;
+			newS = oldS;
+				
+			// Randomly change one of the BKT parameters.
+			if ( randomchange <= 0.25 ) {
+				newL0 = Math.max(Math.min(oldL0 + thisStep,topL0),0.000001);
+			} else if ( randomchange <= 0.5 ) {
+				newT = Math.max(Math.min(oldT + thisStep,topT),0.000001);
+			} else if ( randomchange <= 0.75 ) {
+				newG = Math.max(Math.min(oldG + thisStep,topG),0.000001);
+			} else {
+				newS = Math.max(Math.min(oldS + thisStep,topS),0.000001);
 			}
-
-		// for a bit mroe precision
-		double startLzero = bestLzero;
-		double starttrans = besttrans;
-		double startG = bestG;
-		double startS = bestS;
-		for (double Lzero = startLzero - 0.009; ((Lzero <= startLzero + 0.009) && (Lzero <= topL0)); Lzero = Lzero + 0.001)
-			for (double G = startG - 0.009; ((G <= startG + 0.009) && (G <= topG)); G = G + 0.001) {
-				for (double S = startS - 0.009; ((S <= startS + 0.009) && (S <= topS)); S = S + 0.001) {
-					for (double trans = starttrans - 0.009; ((trans <= starttrans + 0.009) && (trans < topT)); trans = trans + 0.001) {
-						SSR = findGOOF(startact, endact, Lzero, trans, G, S);
-						if (SSR < BestSSR) {
-							BestSSR = SSR;
-							bestLzero = Lzero;
-							besttrans = trans;
-							bestG = G;
-							bestS = S;
-						}
-					}
-				}
+				
+			newRMSE = findGOOF(startact, endact, newL0, newT, newG, newS);
+			
+			if ( Math.random() <= Math.exp((oldRMSE-newRMSE)/temp) ) {	// Accept (otherwise move is rejected)
+				oldL0 = newL0;
+				oldT = newT;
+				oldG = newG;
+				oldS = newS;
+				oldRMSE = newRMSE;
 			}
-
+			
+			if ( newRMSE < BestRMSE ) {			// This method allows the RMSE to increase, but we're interested 
+				bestLzero = newL0;				// in the global minimum, so save the minimum values as the "best."
+				besttrans = newT;
+				bestG = newG;
+				bestS = newS;
+				BestRMSE = newRMSE;
+			}
+				
+			if ( i % 10000 == 0 && i > 0 ) {			// Every 10,000 steps, decrease the "temperature."
+				if ( BestRMSE == prevBestRMSE ) break;	// If the best estimate didn't change, we're done.
+				
+				prevBestRMSE = BestRMSE;
+				temp = temp/2.0;
+			}
+					
+		}
+		
 		System.out.print(skill_[startact]);
 		System.out.print("\t");
 		System.out.print(bestLzero);
@@ -198,6 +234,8 @@ public class computeKTparams_SA {
 		System.out.print(bestS);
 		System.out.print("\t");
 		System.out.print(besttrans);
+		System.out.print("\t");
+		System.out.print(BestRMSE);
 		System.out.println("\teol");
 	}
 
@@ -206,7 +244,7 @@ public class computeKTparams_SA {
 
 		read_in_data(st_);
 
-		System.out.println("skill\tL0\tG\tS\tT\teol");
+		System.out.println("skill\tL0\tG\tS\tT\tRMSE\teol");
 		for (int curskill = 0; curskill <= skillnum; curskill++) {
 			fit_skill_model(curskill);
 		}
