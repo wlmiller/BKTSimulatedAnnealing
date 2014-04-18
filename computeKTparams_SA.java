@@ -213,9 +213,13 @@ public class computeKTparams_SA {
 	}
 
 	public static void main(String args[]) {
-		String infile_ = "./TestData.txt";//Needs to be tab delimited
-		computeKTparams_SA m = new computeKTparams_SA();
-		m.computelzerot(infile_);
+		if (args.length < 1) {
+			System.err.println("Please specify the location of the log file.");
+		} else {
+			String infile_ = args[0];//Needs to be tab delimited
+			computeKTparams_SA m = new computeKTparams_SA();
+			m.computelzerot(infile_);
+		}
 	}
 
 }
