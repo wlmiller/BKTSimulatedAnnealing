@@ -1,6 +1,6 @@
 import java.io.*;
 
-public class computeKTparamsAll {
+public class computeKTparams_SA {
 	 /** 
 	 * This class expects data sorted on Skill and then on Student in the below mentioned format
 	 * num		lesson					student			skill		   cell 	right	eol
@@ -214,7 +214,7 @@ public class computeKTparamsAll {
 
 	public static void main(String args[]) {
 		String infile_ = "./TestData.txt";//Needs to be tab delimited
-		computeKTparamsAll m = new computeKTparamsAll();
+		computeKTparams_SA m = new computeKTparams_SA();
 		m.computelzerot(infile_);
 	}
 
