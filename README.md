@@ -2,6 +2,8 @@
 
 This code is based on the original [BKT Brute Force](http://www.columbia.edu/~rsb2162/BKT-BruteForce.zip) code from Baker _et al._ (2008).  In that code, BKT parameters were fit by trying every combination of the four BKT parameters `Lzero`, `Guess`, `Slip`, and `T` on a fine-grained grid, and reurning the combination which resulted in the best sum of squared residuals (`SSR`) on predicting the student's answers.
 
+__Note__: _This class expects a tab-delimited input file, sorted by Skill and then by Student -- see the included [TestData.txt](TestData.txt) (the original test file from Baker et al. without modification).  The name of the input file is passed as a command-line argument; e.g._ `java computeKTparams_SA TestData.txt`.
+
 This code modifies that behavior by fitting the parameters using simulated annealing.  Initial, random guesses are selected for the four parameters, and the root mean squared error (`RMSE`) is calculated.  A Monte Carlo algorithm is carried out by ssuccessively randomly changing the parameters by small amounts, and accepting or rejecting these changes based upon the Metropolis criterion:
 
 ```java
