@@ -1,4 +1,8 @@
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.StreamTokenizer;
+import java.util.HashMap;
+import java.util.Map;
 
 public class computeKTparams_SA {
 	 /** 
@@ -12,12 +16,57 @@ public class computeKTparams_SA {
 	public double right_[] = new double[27600];
 	public int skillends_[] = new int[15];//Number of Skills
 	public int skillnum = -1;
-	public boolean lnminus1_estimation = false;
-	public boolean bounded = true;
-	public boolean L0Tbounded = false;
+	public final boolean lnminus1_estimation = false;
+	public final boolean bounded = true;
+	public final boolean L0Tbounded = false;
+	
+	public Map<String,Double> top = new HashMap<String, Double>();
+	public final double stepSize = 0.05;
+	public final double minVal = 0.000001;
+	public final Integer totalSteps = 1000000;
 
+	class BKTParams {
+		public double L0, G, S, T;
+
+		public BKTParams(Double init) {
+			if (init < 0) {
+				this.L0 = Math.random()*top.get("L0");
+				this.G = Math.random()*top.get("G");
+				this.S = Math.random()*top.get("S");
+				this.T = Math.random()*top.get("T");
+			} else {
+				this.L0 = init;
+				this.G = init;
+				this.S = init;
+				this.T = init;
+			}
+		}
+		
+		public BKTParams(BKTParams copy, Boolean randStep) {
+			this.L0 = copy.L0;
+			this.G = copy.G;
+			this.S = copy.S;
+			this.T = copy.T;
+			
+			if (randStep) {
+				Double randomchange = Math.random();
+				Double thisStep = 2.*(Math.random()-0.5)*stepSize;
+					
+				// Randomly change one of the BKT parameters.
+				if ( randomchange <= 0.25 ) {
+					this.L0 = Math.max(Math.min(this.L0 + thisStep,top.get("L0")),minVal);
+				} else if ( randomchange <= 0.5 ) {
+					this.T = Math.max(Math.min(this.T + thisStep,top.get("T")),minVal);
+				} else if ( randomchange <= 0.75 ) {
+					this.G = Math.max(Math.min(this.G + thisStep,top.get("G")),minVal);
+				} else {
+					this.S = Math.max(Math.min(this.S + thisStep,top.get("S")),minVal);
+				}
+			}
+		}
+	}
+	
 	public StreamTokenizer create_tokenizer(String infile) {
-
 		try {
 			StreamTokenizer st = new StreamTokenizer(new FileReader(infile));
 			st.wordChars(95, 95);
@@ -68,8 +117,6 @@ public class computeKTparams_SA {
 
 				tt = st_.nextToken(); // eol
 
-				// System.out.println(slip_[actnum]);
-
 				actnum++;
 				if (!skill_[actnum - 1].equals(prevskill)) {
 					prevskill = skill_[actnum - 1];
@@ -80,33 +127,33 @@ public class computeKTparams_SA {
 
 			}
 		} catch (Exception e) {
-			System.out.println(actnum);
 			e.printStackTrace();
 		}
 
 	}
 
-	public double findGOOF(int start, int end, double Lzero, double trans,
-			double G, double S) {
+	public double findGOOF(int start, int end, BKTParams params) {
 		double SSR = 0.0;
-		String prevstudent = "FWORPLEJOHN";
+		String prevstudent = "FWORPLEJOHN";		// A random student id.
 		double prevL = 0.0;
-		double likelihoodcorrect = 0.0;
 		double prevLgivenresult = 0.0;
 		double newL = 0.0;
+		
+		double likelihoodcorrect = 0.0;
+		
 		Integer count = 0;
 
 		for (int i = start; i <= end; i++) {
 
 			if (!students_[i].equals(prevstudent)) {
-				prevL = Lzero;
+				prevL = params.L0;
 				prevstudent = students_[i];
 			}
 
 			if (lnminus1_estimation)
 				likelihoodcorrect = prevL;
 			else
-				likelihoodcorrect = (prevL * (1.0 - S)) + ((1.0 - prevL) * G);
+				likelihoodcorrect = (prevL * (1.0 - params.S)) + ((1.0 - prevL) * params.G);
 			if ( right_[i] != -1.0 ) {
 				SSR += (right_[i] - likelihoodcorrect) * (right_[i] - likelihoodcorrect);
 				count++;
@@ -115,11 +162,11 @@ public class computeKTparams_SA {
 			if ( right_[i] == -1.0 ) {
 				prevLgivenresult = prevL;
 			} else {
-				prevLgivenresult = right_[i]*((prevL * (1.0 - S)) / ((prevL * (1 - S)) + ((1.0 - prevL) * (G))));
-				prevLgivenresult += (1-right_[i])*((prevL * (S)) / ((prevL * (S)) + ((1.0 - prevL) * (1.0 - G))));
+				prevLgivenresult = right_[i]*((prevL * (1.0 - params.S)) / ((prevL * (1 - params.S)) + ((1.0 - prevL) * (params.G))));
+				prevLgivenresult += (1-right_[i])*((prevL * params.S) / ((prevL * params.S) + ((1.0 - prevL) * (1.0 - params.G))));
 			}
 
-			newL = prevLgivenresult + (1.0 - prevLgivenresult) * trans;
+			newL = prevLgivenresult + (1.0 - prevLgivenresult) * params.T;
 			prevL = newL;
 		}
 		if ( count == 0 ) return 0;
@@ -127,99 +174,62 @@ public class computeKTparams_SA {
 	}
 
 	public void fit_skill_model(int curskill) {
-		double BestRMSE = 9999999.0;
-		double bestLzero = 0.01;
-		double besttrans = 0.01;
-		double bestG = 0.01;
-		double bestS = 0.01;
-		double topG = 0.999999;
-		double topS = 0.999999;
-		double topL0 = 0.999999;
-		double topT = 0.999999;
+		if (L0Tbounded) {
+			top.put("L0",0.85);
+			top.put("T", 0.3);
+		} else {
+			top.put("L0",0.999999);
+			top.put("T",0.999999);
+		}
 		
-		double prevBestRMSE = 9999999.0;
+		if (bounded) {
+			top.put("G", 0.3);
+			top.put("S", 0.1);
+		} else {
+			top.put("G",0.999999);
+			top.put("S",0.999999);
+		}
 
-		double oldL0 = 0.01;
-		double oldG = 0.01;
-		double oldS = 0.01;
-		double oldT = 0.01;
+		// oldParams is randomized.
+		BKTParams oldParams = new BKTParams(-1.);
+		BKTParams bestParams = new BKTParams(0.01);
 		
-		double newL0 = 0.01;
-		double newG = 0.01;
-		double newS = 0.01;
-		double newT = 0.01;
+		double oldRMSE = 1.;
+		double newRMSE = 1.;
 		
-		double oldRMSE = 1;
-		double newRMSE = 1;
+		double bestRMSE = 9999999.0;
+		double prevBestRMSE = 9999999.0;
 		
 		double temp = 0.005;
-		double stepSize = 0.05;
 		
-		Integer totalSteps = 1000000;
-		
-		if (L0Tbounded) {
-			topL0 = 0.85;
-			topT = 0.3;
-		}
-		if (bounded) {
-			topG = 0.3;
-			topS = 0.1;
-		}
-
 		int startact = 0;
 		if (curskill > 0)
 			startact = skillends_[curskill - 1] + 1;
 		int endact = skillends_[curskill];
 		
-		// Select random initial conditions.
-		oldL0 = Math.random()*topL0;
-		oldG = Math.random()*topG;
-		oldS = Math.random()*topS;
-		oldT = Math.random()*topT;
-		oldRMSE = findGOOF(startact, endact, oldL0, oldT, oldG, oldS);
+		// Get the initial RMSE.
+		oldRMSE = findGOOF(startact, endact, oldParams);
 	
 		for ( Integer i = 0; i < totalSteps; i++ ) {
-			Double randomchange = Math.random();
-			Double thisStep = 2.*(Math.random()-0.5)*stepSize;
+			// Take a random step.
+			BKTParams newParams = new BKTParams(oldParams, true);
 				
-			newL0 = oldL0;
-			newT = oldT;
-			newG = oldG;
-			newS = oldS;
-				
-			// Randomly change one of the BKT parameters.
-			if ( randomchange <= 0.25 ) {
-				newL0 = Math.max(Math.min(oldL0 + thisStep,topL0),0.000001);
-			} else if ( randomchange <= 0.5 ) {
-				newT = Math.max(Math.min(oldT + thisStep,topT),0.000001);
-			} else if ( randomchange <= 0.75 ) {
-				newG = Math.max(Math.min(oldG + thisStep,topG),0.000001);
-			} else {
-				newS = Math.max(Math.min(oldS + thisStep,topS),0.000001);
-			}
-				
-			newRMSE = findGOOF(startact, endact, newL0, newT, newG, newS);
+			newRMSE = findGOOF(startact, endact, newParams);
 			
 			if ( Math.random() <= Math.exp((oldRMSE-newRMSE)/temp) ) {	// Accept (otherwise move is rejected)
-				oldL0 = newL0;
-				oldT = newT;
-				oldG = newG;
-				oldS = newS;
+				oldParams = new BKTParams(newParams, false);
 				oldRMSE = newRMSE;
 			}
 			
-			if ( newRMSE < BestRMSE ) {			// This method allows the RMSE to increase, but we're interested 
-				bestLzero = newL0;				// in the global minimum, so save the minimum values as the "best."
-				besttrans = newT;
-				bestG = newG;
-				bestS = newS;
-				BestRMSE = newRMSE;
+			if ( newRMSE < bestRMSE ) {							// This method allows the RMSE to increase, but we're interested 
+				bestParams = new BKTParams(newParams, false);	// in the global minimum, so save the minimum values as the "best."
+				bestRMSE = newRMSE;
 			}
 				
 			if ( i % 10000 == 0 && i > 0 ) {			// Every 10,000 steps, decrease the "temperature."
-				if ( BestRMSE == prevBestRMSE ) break;	// If the best estimate didn't change, we're done.
+				if ( bestRMSE == prevBestRMSE ) break;	// If the best estimate didn't change, we're done.
 				
-				prevBestRMSE = BestRMSE;
+				prevBestRMSE = bestRMSE;
 				temp = temp/2.0;
 			}
 					
@@ -227,26 +237,27 @@ public class computeKTparams_SA {
 		
 		System.out.print(skill_[startact]);
 		System.out.print("\t");
-		System.out.print(bestLzero);
+		System.out.print(bestParams.L0);
 		System.out.print("\t");
-		System.out.print(bestG);
+		System.out.print(bestParams.G);
 		System.out.print("\t");
-		System.out.print(bestS);
+		System.out.print(bestParams.S);
 		System.out.print("\t");
-		System.out.print(besttrans);
+		System.out.print(bestParams.T);
 		System.out.print("\t");
-		System.out.print(BestRMSE);
+		System.out.print(bestRMSE);
 		System.out.println("\teol");
 	}
 
 	public void computelzerot(String infile_) {
 		StreamTokenizer st_ = create_tokenizer(infile_);
-
-		read_in_data(st_);
-
-		System.out.println("skill\tL0\tG\tS\tT\tRMSE\teol");
-		for (int curskill = 0; curskill <= skillnum; curskill++) {
-			fit_skill_model(curskill);
+		if (st_ != null) {
+			read_in_data(st_);
+	
+			System.out.println("skill\tL0\tG\tS\tT\tRMSE\teol");
+			for (int curskill = 0; curskill <= skillnum; curskill++) {
+				fit_skill_model(curskill);
+			}
 		}
 	}
 

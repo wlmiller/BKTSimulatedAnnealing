@@ -13,4 +13,5 @@ P(accept) = Math.exp((oldRMSE-newRMSE)/temp)
 In this equation, `temp` is a virtual temperature, which is slowly decreased until the RMSE stops changing (or until the maximum number of steps, which is set to `1,000,000` by default).  At all times, the set of parameters resulting in the lowest `RMSE` is retained: while the Monte Carlo algorith allows the `RMSE` to increase to avoid getting trapped in local minima, we are interested in the global minimum.
 
 References:  
+
 1.	Baker, R.S.J.d., Corbett, A.T., Aleven, V. (2008) [More Accurate Student Modeling Through Contextual Estimation of Slip and Guess Probabilities in Bayesian Knowledge Tracing](http://dl.acm.org/citation.cfm?id=1426036). _Proceedings of the 9th International Conference on Intelligent Tutoring Systems_, 406-415.
