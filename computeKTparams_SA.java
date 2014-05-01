@@ -64,6 +64,10 @@ public class computeKTparams_SA {
 				}
 			}
 		}
+		
+		public BKTParams(BKTParams copy) {
+			this(copy, false);
+		}
 	}
 	
 	public StreamTokenizer create_tokenizer(String infile) {
@@ -217,12 +221,12 @@ public class computeKTparams_SA {
 			newRMSE = findGOOF(startact, endact, newParams);
 			
 			if ( Math.random() <= Math.exp((oldRMSE-newRMSE)/temp) ) {	// Accept (otherwise move is rejected)
-				oldParams = new BKTParams(newParams, false);
+				oldParams = new BKTParams(newParams);
 				oldRMSE = newRMSE;
 			}
 			
 			if ( newRMSE < bestRMSE ) {							// This method allows the RMSE to increase, but we're interested 
-				bestParams = new BKTParams(newParams, false);	// in the global minimum, so save the minimum values as the "best."
+				bestParams = new BKTParams(newParams);	// in the global minimum, so save the minimum values as the "best."
 				bestRMSE = newRMSE;
 			}
 				
