@@ -17,4 +17,4 @@ This tool is copyright William Miller, Ryan Baker, and colleagues -- it is free 
 References:  
 
 1.	Baker, R.S.J.d., Corbett, A.T., Aleven, V. (2008) [More Accurate Student Modeling Through Contextual Estimation of Slip and Guess Probabilities in Bayesian Knowledge Tracing](http://dl.acm.org/citation.cfm?id=1426036). _Proceedings of the 9th International Conference on Intelligent Tutoring Systems_, 406-415.
-2. Miller, W. L., Baker, R.S. and Rossi, L.M. (in press) Unifying Computer-Based Assessment Across Conceptual Instruction, Problem-Solving, and Digital Games. To appear in _Technology, Knowledge and Learning_. ([preprint](https://github.com/wlmiller/wlmiller.github.io/raw/master/files/TKNL_final_full.pdf))
+2. Miller, W. L., Baker, R.S. and Rossi, L.M. (2014) [Unifying Computer-Based Assessment Across Conceptual Instruction, Problem-Solving, and Digital Games](http://dx.doi.org/10.1007/s10758-014-9225-5). _Technology, Knowledge and Learning_. Advance online publication. doi:10.1007/s10758-014-9225-5. ([preprint](https://github.com/wlmiller/wlmiller.github.io/raw/master/files/TKNL_final_full.pdf))
