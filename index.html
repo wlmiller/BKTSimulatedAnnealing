@@ -33,7 +33,7 @@
 
 <p>This code is based on the original <a href="http://www.columbia.edu/%7Ersb2162/BKT-BruteForce.zip">BKT Brute Force</a> code from Baker, Corbett, and Aleven (2008).  In that code, BKT parameters were fit by trying every combination of the four BKT parameters <code>Lzero</code>, <code>Guess</code>, <code>Slip</code>, and <code>T</code> on a fine-grained grid, and reurning the combination which resulted in the best sum of squared residuals (<code>SSR</code>) on predicting the student's answers.</p>
 
-<p><strong>Note</strong>: <em>This class expects a tab-delimited input file, sorted by Skill and then by Student -- see the included <a href="TestData.txt">TestData.txt</a> (the original test file from Baker et al. without modification).  The name of the input file is passed as a command-line argument; e.g.</em> <code>java computeKTparams_SA TestData.txt</code>.</p>
+<p><strong>Note</strong>: <em>This class expects a tab-delimited input file, sorted by Skill and then by Student -- see the included <a href="https://github.com/wlmiller/BKTSimulatedAnnealing/blob/master/TestData.txt?raw=true">TestData.txt</a> (the original test file from Baker et al. without modification).  The name of the input file is passed as a command-line argument; e.g.</em> <code>java computeKTparams_SA TestData.txt</code>.</p>
 
 <p>This code modifies that behavior by fitting the parameters using simulated annealing.  Initial, random guesses are selected for the four parameters, and the root mean squared error (<code>RMSE</code>) is calculated.  A Monte Carlo algorithm is carried out by successively randomly changing the parameters by small amounts, and accepting or rejecting these changes based upon the Metropolis criterion:</p>
 
@@ -42,13 +42,13 @@
 
 <p>In this equation, <code>temp</code> is a virtual temperature, which is slowly decreased until the RMSE stops changing (or until the maximum number of steps, which is set to <code>1,000,000</code> by default).  At all times, the set of parameters resulting in the lowest <code>RMSE</code> is retained: while the Monte Carlo algorith allows the <code>RMSE</code> to increase to avoid getting trapped in local minima, we are interested in the global minimum.  For more details, see Miller, Baker, and Rossi (in press). </p>
 
-<p>This tool is copyright William Miller, Ryan Baker, and colleagues -- it is free for any non-commercial or research use. Please contact me before using for any commercial use. This code is NOT supported. Use it at your own risk, and make sure to check that data is sorted properly. You are welcome to re-distribute this code as long as proper credit is given. If you use this code for a published paper, please cite Miller <em>et al.</em> (in press).</p>
+<p>This tool is copyright William Miller, Ryan Baker, and colleagues -- it is free for any non-commercial or research use. Please contact me before using for any commercial use. This code is NOT supported. Use it at your own risk, and make sure to check that data is sorted properly. You are welcome to re-distribute this code as long as proper credit is given. If you use this code for a published paper, please cite Miller <em>et al.</em> (2014).</p>
 
 <p>References:  </p>
 
 <ol>
 <li> Baker, R.S.J.d., Corbett, A.T., Aleven, V. (2008) <a href="http://dl.acm.org/citation.cfm?id=1426036">More Accurate Student Modeling Through Contextual Estimation of Slip and Guess Probabilities in Bayesian Knowledge Tracing</a>. <em>Proceedings of the 9th International Conference on Intelligent Tutoring Systems</em>, 406-415.</li>
-<li>Miller, W. L., Baker, R.S. and Rossi, L.M. (2014) <a href="http://dx.doi.org/10.1007/s10758-014-9225-5">Unifying Computer-Based Assessment Across Conceptual Instruction, Problem-Solving, and Digital Games</a>. <em>Technology, Knowledge and Learning</em>. Advance online publication. doi:10.1007/s10758-014-9225-5. (<a href="https://github.com/wlmiller/wlmiller.github.io/raw/master/files/TKNL_final_full.pdf">preprint</a>)</li>
+<li>Miller, W. L., Baker, R.S. and Rossi, L.M. (2014) <a href="http://dx.doi.org/10.1007/s10758-014-9225-5">Unifying Computer-Based Assessment Across Conceptual Instruction, Problem-Solving, and Digital Games</a>. <em>Technology, Knowledge and Learning</em>. 165-181. (<a href="https://github.com/wlmiller/wlmiller.github.io/raw/master/files/TKNL_final_full.pdf">preprint</a>)</li>
 </ol>
       </section>
       <footer>
